@@ -11,6 +11,9 @@
 #   Rscript run_extension.R
 #####################################################################
 
+library(ggplot2)
+library(ggrepel)
+
 source("00_setup.R")
 source("Exp1_JTK_prefilter.R")
 source("Exp2_geneset_substitution.R")
@@ -20,27 +23,56 @@ e1 <- exp1.pooled[order(exp1.pooled$nGene), ]
 e2 <- exp2.pooled[exp2.pooled$set != "fullPool", ]
 
 pdf("output/Fig_tradeoff_combined.pdf", width = 8, height = 5.5)
-op <- par(mar = c(4.5, 4.5, 3, 1))
-plot(e1$nGene, e1$nAUC, log = "x", type = "b", pch = 19, col = "navy",
-     ylim = c(0.75, 0.88), xlim = c(3, 8000),
-     xlab = "Number of genes in candidate pool (log scale)",
-     ylab = "nAUC (pooled validation: GSE48113/56931/113883)",
-     main = "TimeSignature gene-count vs accuracy trade-off")
-abline(h = 0.80, lty = 2, col = "red")
-text(3, 0.805, "clinical floor nAUC = 0.80", pos = 4, col = "red", cex = 0.8)
 
-# overlay the published gene sets (Exp 2)
-cols <- c(TScore18 = "darkgreen", TimeMachine37 = "darkorange",
-          tauFisher = "purple", clockOnly = "brown", intersection = "magenta")
-points(e2$nGene, e2$nAUC, pch = 17, cex = 1.4, col = cols[e2$set])
-text(e2$nGene, e2$nAUC, e2$set, pos = c(1, 3, 1, 1, 3), cex = 0.75,
-     col = cols[e2$set])
+p <- ggplot() +
+  # 1. Clinical floor (nAUC = 0.80) 가이드라인
+  geom_hline(yintercept = 0.80, linetype = "dashed", color = "firebrick", alpha = 0.7) +
+  annotate("text", x = 4, y = 0.802, label = "clinical floor nAUC = 0.80", 
+           color = "firebrick", size = 3.5, hjust = 0, fontface = "italic") +
+  
+  # 2. Exp 1: JTK-filtered top-K pool (선과 점)
+  geom_line(data = e1, aes(x = nGene, y = nAUC), color = "navy", alpha = 0.6) +
+  geom_point(data = e1, aes(x = nGene, y = nAUC, shape = "Exp 1: JTK-filtered top-K pool"), 
+             color = "navy", size = 2.5) +
+  
+  # 3. Exp 2: Published gene sets (포인트)
+  geom_point(data = e2, aes(x = nGene, y = nAUC, color = set, shape = "Exp 2: published gene sets"), 
+             size = 3.5) +
+  
+  # 4. Exp 2: 겹치지 않는 라벨 (ggrepel 사용)
+  geom_text_repel(data = e2, aes(x = nGene, y = nAUC, label = set, color = set),
+                  size = 3.5, fontface = "bold", box.padding = 0.6, 
+                  point.padding = 0.5, show.legend = FALSE) +
+  
+  # 5. 스케일 및 축 범위 설정 (원래 범위 완벽 재현)
+  scale_x_log10(breaks = c(10, 50, 100, 500, 1000, 5000)) +
+  scale_shape_manual(name = NULL, values = c("Exp 1: JTK-filtered top-K pool" = 16, 
+                                             "Exp 2: published gene sets" = 17)) +
+  scale_color_brewer(palette = "Set1") + 
+  guides(color = "none") + 
+  
+  # 6. 테마 설정 (그리드 제거 및 범례 내부 배치 반영)
+  labs(
+    title = "TimeSignature gene-count vs accuracy trade-off",
+    x = "Number of genes in candidate pool (log scale)",
+    y = "nAUC (pooled validation: GSE48113/56931/113883)"
+  ) +
+  theme_bw() + 
+  theme(
+    panel.grid.major = element_blank(),  # 주 격자선 제거
+    panel.grid.minor = element_blank(),  # 보조 격자선 제거
+    legend.position = c(0.98, 0.02),      # 그래프 내부 우측 하단 배치 (상대좌표 x=0.98, y=0.02)
+    legend.justification = c("right", "bottom"),
+    legend.background = element_blank(),  # 범례 박스 배경 투명화 (원래 코드의 bty = "n")
+    legend.key = element_blank(),         # 범례 아이콘 심볼 배경 투명화
 
-legend("bottomright", bty = "n", cex = 0.85,
-       pch = c(19, 17), col = c("navy", "black"),
-       legend = c("Exp 1: JTK-filtered top-K pool",
-                  "Exp 2: published gene sets"))
-par(op); dev.off()
+    plot.title = element_text(face = "bold", hjust = 0.5, margin = margin(b = 15)), # 메인 타이틀 아래쪽(b) 여백 추가
+    axis.title.x = element_text(margin = margin(t = 15)), # x축 제목 위쪽(t) 여백 추가 (그림과 멀어짐)
+    axis.title.y = element_text(margin = margin(r = 15))  # y축 제목 오른쪽(r) 여백 추가 (그림과 멀어짐)
+  )
+
+print(p)
+dev.off()
 
 #--- master summary table --------------------------------------------
 master <- rbind(
