@@ -142,29 +142,87 @@ evalAcrossStudies <- function(ts, calibMat, meta,
 }
 
 
+library(ggplot2)
+
 #---------------------------------------------------------------------
-# Gene-count vs accuracy trade-off plot (the project deliverable).
+# Gene-count vs accuracy trade-off plot (ggplot2 Publication-Ready ver)
 #   df      : data.frame with columns nGene, nAUC, MAE (pooled rows)
 #   target  : clinical nAUC floor to draw (default 0.80)
 #---------------------------------------------------------------------
 tradeoffPlot <- function(df, target = 0.80, maeTarget = 2.5,
                          main = "Gene count vs. accuracy trade-off") {
-	df <- df[order(df$nGene), ]
-	opar <- par(mar = c(4.2, 4.2, 3, 4.2)); on.exit(par(opar))
-	plot(df$nGene, df$nAUC, log = "x", type = "b", pch = 19, col = "navy",
-	     ylim = c(min(0.6, df$nAUC), max(0.9, df$nAUC)),
-	     xlab = "Number of genes in pool (log scale)",
-	     ylab = "nAUC", main = main)
-	abline(h = target, lty = 2, col = "red")
-	text(min(df$nGene), target, sprintf("nAUC = %.2f", target),
-	     pos = 3, col = "red", cex = 0.8)
-	# overlay MAE on a second axis
-	usr <- par("usr"); yr <- range(df$MAE)
-	sc  <- function(v) usr[3] + (v - yr[1]) / diff(yr) * diff(usr[3:4])
-	lines(df$nGene, sc(df$MAE), type = "b", pch = 17, col = "darkorange")
-	axis(4, at = sc(pretty(df$MAE)), labels = pretty(df$MAE), col.axis = "darkorange")
-	mtext("MAE (h)", side = 4, line = 2.5, col = "darkorange")
-	legend("bottomright", bty = "n", lty = 1, pch = c(19, 17),
-	       col = c("navy", "darkorange"), legend = c("nAUC", "MAE (h)"))
-	invisible(df)
+  
+  df <- df[order(df$nGene), ]
+  
+  # 1. 이중 축(Dual-axis)을 위한 동적 스케일링 설정
+  # 왼쪽 y축(nAUC) 범위 설정 (Combined plot과 동일하게 맞춤)
+  p_min <- min(0.75, min(df$nAUC, na.rm = TRUE))
+  p_max <- max(0.88, max(df$nAUC, na.rm = TRUE))
+  
+  # 오른쪽 y축(MAE) 범위 설정
+  s_min <- min(1.5, min(df$MAE, na.rm = TRUE))
+  s_max <- max(3.0, max(df$MAE, na.rm = TRUE))
+  
+  # 변환 공식: MAE_scaled = MAE * slope + intercept
+  slope <- (p_max - p_min) / (s_max - s_min)
+  intercept <- p_min - slope * s_min
+  
+  # MAE 값을 nAUC 그리는 공간에 맞춰 스케일링
+  df$MAE_scaled <- df$MAE * slope + intercept
+  
+  # 2. ggplot 객체 생성
+  p <- ggplot(df, aes(x = nGene)) +
+    
+    # 가이드라인 (Clinical floor nAUC)
+    geom_hline(yintercept = target, linetype = "dashed", color = "firebrick", alpha = 0.7) +
+    annotate("text", x = min(df$nGene), y = target - 0.005, 
+             label = sprintf("clinical floor nAUC = %.2f", target), 
+             color = "firebrick", size = 3.5, hjust = 0, fontface = "italic") +
+    
+    # MAE (오른쪽 축 대응) - 주황색
+    geom_line(aes(y = MAE_scaled, color = "MAE (h)"), alpha = 0.6) +
+    geom_point(aes(y = MAE_scaled, color = "MAE (h)", shape = "MAE (h)"), size = 2.5) +
+    
+    # nAUC (왼쪽 축 대응) - 네이비
+    geom_line(aes(y = nAUC, color = "nAUC"), alpha = 0.6) +
+    geom_point(aes(y = nAUC, color = "nAUC", shape = "nAUC"), size = 2.5) +
+    
+    # x축(로그 스케일) 및 이중 y축 설정
+    scale_x_log10(breaks = c(10, 50, 100, 500, 1000, 5000)) +
+    scale_y_continuous(
+      name = "nAUC",
+      limits = c(p_min, p_max),
+      # sec_axis를 통해 오른쪽 축의 숫자를 역변환하여 원래 MAE 값으로 표시
+      sec.axis = sec_axis(~ (. - intercept) / slope, name = "MAE (h)")
+    ) +
+    
+    # 색상 및 범례 매핑
+    scale_color_manual(name = NULL, values = c("nAUC" = "navy", "MAE (h)" = "darkorange")) +
+    scale_shape_manual(name = NULL, values = c("nAUC" = 16, "MAE (h)" = 17)) +
+    
+    # 3. 테마 설정 (격자 제거, 이중 축 색상 지정, 여백 확보)
+    labs(
+      title = main, 
+      x = "Number of genes in candidate pool (log scale)"
+    ) +
+    theme_bw() +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      legend.position = c(0.98, 0.10),      # 두 그래프 선을 피해 우측 중앙 쯤에 배치
+      legend.justification = c("right", "center"),
+      legend.background = element_blank(),  # 범례 배경 투명화
+      legend.key = element_blank(),         # 아이콘 배경 투명화
+      
+      # 텍스트 여백 및 색상 설정 (각 축의 색상을 데이터 선 색상과 일치시킴!)
+      plot.title = element_text(face = "bold", hjust = 0.5, margin = margin(b = 15)),
+      axis.title.x = element_text(margin = margin(t = 15)),
+      axis.title.y = element_text(margin = margin(r = 10), color = "navy"),
+      axis.text.y.left = element_text(color = "navy"),
+      axis.title.y.right = element_text(margin = margin(l = 10), color = "darkorange"),
+      axis.text.y.right = element_text(color = "darkorange")
+    )
+  
+  print(p)
+  invisible(df)
 }

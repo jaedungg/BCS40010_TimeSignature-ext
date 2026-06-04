@@ -61,7 +61,7 @@ print(exp1.pooled[, c("K", "nGene", "nSel", "MAE", "nAUC", "pct2h")],
       row.names = FALSE, digits = 3)
 
 #--- trade-off curve -------------------------------------------------
-pdf("output/Exp1_tradeoff.pdf", width = 7, height = 5)
+pdf("output/Exp1_tradeoff.pdf", width = 7.5, height = 5)
 tradeoffPlot(exp1.pooled, target = 0.80,
              main = "Exp 1: JTK pre-filtered pool size vs accuracy")
 dev.off()

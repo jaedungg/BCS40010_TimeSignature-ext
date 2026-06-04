@@ -22,7 +22,7 @@ source("Exp2_geneset_substitution.R")
 e1 <- exp1.pooled[order(exp1.pooled$nGene), ]
 e2 <- exp2.pooled[exp2.pooled$set != "fullPool", ]
 
-pdf("output/Fig_tradeoff_combined.pdf", width = 8, height = 5.5)
+pdf("output/Fig_tradeoff_combined.pdf", width = 7.5, height = 5)
 
 p <- ggplot() +
   # 1. Clinical floor (nAUC = 0.80) 가이드라인
@@ -55,13 +55,13 @@ p <- ggplot() +
   labs(
     title = "TimeSignature gene-count vs accuracy trade-off",
     x = "Number of genes in candidate pool (log scale)",
-    y = "nAUC (pooled validation: GSE48113/56931/113883)"
+    y = "nAUC (pooled validation)"
   ) +
   theme_bw() + 
   theme(
     panel.grid.major = element_blank(),  # 주 격자선 제거
     panel.grid.minor = element_blank(),  # 보조 격자선 제거
-    legend.position = c(0.98, 0.02),      # 그래프 내부 우측 하단 배치 (상대좌표 x=0.98, y=0.02)
+    legend.position = c(0.98, 0.0),      # 그래프 내부 우측 하단 배치 (상대좌표 x=0.98, y=0.02)
     legend.justification = c("right", "bottom"),
     legend.background = element_blank(),  # 범례 박스 배경 투명화 (원래 코드의 bty = "n")
     legend.key = element_blank(),         # 범례 아이콘 심볼 배경 투명화
