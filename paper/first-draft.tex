@@ -5,7 +5,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage[hidelinks]{hyperref}          % hidelinks: 색 박스 제거
+\usepackage[hidelinks]{hyperref}          % remove colored link boxes
 \usepackage{natbib}
 \usepackage{caption}
 \usepackage{subcaption}
@@ -18,7 +18,7 @@
 \captionsetup{font=small, labelfont=bf}
 
 %--- metadata --------------------------------------------------------
-\title{\Large\textbf{Gene-Selection Optimisation via JTK\_Cycle Pre-Filtering:}\\
+\title{\Large\textbf{Gene-Selection Optimization via JTK\_Cycle Pre-Filtering:}\\
        \Large\textbf{Reproducing and Extending \emph{TimeSignature}}}
 
 \author{
@@ -37,12 +37,12 @@
 
 \vspace{0.5em}
 \noindent\rule{\linewidth}{0.4pt}
-\vspace{1pt}
+\vspace{-4pt}
 
 \noindent{\small \textbf{Code Availability:} The complete R source code, including the implementation of the JTK\_Cycle pre-filtering pipeline and simulation scripts, is openly available on GitHub at 
-\url{https://github.com/jaedungg/BCS40010_TimeSignature-ext}}
+\url{https://github.com/jaedungg/BCS40010_TimeSignature-ext}.}
 
-\vspace{6pt}
+\vspace{4pt}
 \noindent\rule{\linewidth}{0.4pt}
 \vspace{1.5em}
 
@@ -93,7 +93,7 @@ from hormone secretion and immune function to drug metabolism and cell
 division \citep{Reppert2002}.
 This pervasive regulation makes the precise estimation of an
 individual's internal circadian phase---often termed the
-\emph{circadian time}---a prerequisite for personalised chronotherapy,
+\emph{circadian time}---a prerequisite for personalized chronotherapy,
 shift-work assessment, and circadian disorder diagnosis
 \citep{Archer2014}.
 The gold-standard measure of circadian phase is the dim-light
@@ -109,11 +109,11 @@ Building on this observation, Braun et al.\ (2018) introduced
 \emph{TimeSignature}, an elastic-net model that predicts local
 sampling time from whole-blood microarray profiles \citep{Braun2018}.
 TimeSignature requires two blood draws approximately 12\,h apart for
-within-subject normalisation;
+within-subject normalization;
 it trains on all ${\sim}$7,600 genes in
 the cross-study intersection and lets the elastic-net penalty
 implicitly select ${\sim}$40 predictors.
-This approach achieves a normalised AUC (nAUC) of ${\sim}$0.85 and a
+This approach achieves a normalized AUC (nAUC) of ${\sim}$0.85 and a
 median absolute error below 2\,h on four independent datasets.
 Despite this strong cross-study performance, the method enters the
 elastic net with no prior periodicity screen, so the majority of the
@@ -124,7 +124,7 @@ Later methods addressed this inefficiency by pre-filtering genes with
 JTK\_Cycle \citep{Hughes2010}, a non-parametric rank-correlation test
 that identifies 24-hour rhythms in time-series expression data.
 TimeMachine (Huang \& Braun, 2024) applies JTK\_Cycle to reduce
-the candidate pool to 37 rhythmic genes before fitting a penalised
+the candidate pool to 37 rhythmic genes before fitting a penalized
 regression for single-sample circadian-time estimation
 \citep{Huang2024}.
 tauFisher (Duan \& Ngo, 2024) likewise anchors its predictor on
@@ -189,7 +189,7 @@ We briefly summarise the three components of the original
 TimeSignature pipeline that our extension re-uses unchanged; full
 details are given in \citet{Braun2018}.
  
-\paragraph{Within-subject normalisation.}
+\paragraph{Within-subject normalization.}
 Between-subject baseline differences are removed by subtracting, for
 each subject, the mean expression vector across that subject's time
 points from every individual sample.
@@ -314,7 +314,7 @@ Three metrics are computed on the held-out validation samples:
   \item \textbf{MAE}: mean absolute circular error,
     $\overline{|\mathrm{err}|}$, where
     $|\mathrm{err}| = \min(|t - \hat t|,\; 24 - |t - \hat t|)$.
-  \item \textbf{nAUC}: normalised area under the cumulative
+  \item \textbf{nAUC}: normalized area under the cumulative
     distribution function of $|\mathrm{err}|$ over $[0,12]$\,h,
     following the definition in Figure~1 of \citet{Braun2018}:
     \begin{equation}
@@ -345,7 +345,8 @@ clockOnly     &  8 & Canonical core-clock genes present in the
                      7,615-gene universe (ARNTL, PER1, NR1D1,
                      NR1D2, CRY1, DBP, TEF, HLF). \\
 tauFisher     & 17 & Core-clock genes $\cup$ top-10 JTK-ranked
-                     genes (Duan \& Ngo 2024 procedure). \\
+                     genes, reconstructed on GSE39445 following the
+                     procedure of Duan \& Ngo (2024). \\
 TScore18      & 18 & Braun et al.\ (2018) Table~1: genes selected
                      in $\geq$50\% of 12 repeated runs. \\
 TimeMachine37 & 37 & Core-clock genes $\cup$ top JTK-ranked genes,
@@ -391,7 +392,7 @@ predictors and achieved nAUC\,${=}\,0.853$ and
 MAE\,${=}\,1.89$\,h on the pooled validation set
 (Table~\ref{tab:exp2}).
 These values match the original Figure~1 benchmark within rounding,
-confirming that our pipeline---within-subject normalisation, antipodal
+confirming that our pipeline---within-subject normalization, antipodal
 calibration, circular elastic net, and nAUC scoring---is correctly
 implemented.
 
@@ -430,8 +431,7 @@ Pool $K$ & nSel & MAE (h) & nAUC & \%$\leq$2\,h \\
   20  &  19 & 2.20 & 0.827 & 58.7 \\
   25  &  23 & 2.21 & 0.826 & 57.6 \\
   30  &  26 & 2.13 & 0.833 & 62.1 \\
-  40  &  37 & 2.22 & 0.825 & 57.8 
-\\
+  40  &  37 & 2.22 & 0.825 & 57.8 \\
   50  &  42 & 2.11 & 0.834 & 58.9 \\
   75  &  68 & 2.16 & 0.830 & 57.0 \\
  100  &  81 & 2.42 & 0.809 & 53.6 \\
@@ -440,8 +440,7 @@ Pool $K$ & nSel & MAE (h) & nAUC & \%$\leq$2\,h \\
  300  & 114 & 2.34 & 0.816 & 53.5 \\
  500  & 151 & 2.48 & 0.803 & 54.4 \\
 1000  & 175 & 2.11 & 0.834 & 57.8 \\
-2000  & 136 & 1.98 & 0.845 
-& 60.5 \\
+2000  & 136 & 1.98 & 0.845 & 60.5 \\
 7615  & 173 & 1.89 & 0.853 & 62.2 \\
 \bottomrule
 \end{tabular}
@@ -501,47 +500,40 @@ Gene set & Study & $n_{\mathrm{samp}}$ & nGene & nSel
 intersection & V1 & 286 & 4 & 4 & 2.38 & 0.812 & 52.8 \\
              & V2 & 249 & 4 & 4 & 1.80 & 0.860 & 63.1 \\
              & V3 & 153 & 4 & 4 & 2.14 & 0.833 & 58.2 \\
-        
-      & \textbf{Valid.all} & \textbf{688} & \textbf{4}
+             & \textbf{Valid.all} & \textbf{688} & \textbf{4}
                & \textbf{4} & \textbf{2.12} & \textbf{0.834}
                & \textbf{57.7} \\
 \addlinespace
 clockOnly    & V1 & 286 & 8 & 8 & 2.87 & 0.771 & 46.9 \\
              & V2 & 249 & 8 & 8 & 2.33 & 0.816 & 55.8 \\
-        
-      & V3 & 153 & 8 & 8 & 2.60 & 0.794 & 53.6 \\
+             & V3 & 153 & 8 & 8 & 2.60 & 0.794 & 53.6 \\
              & \textbf{Valid.all} & \textbf{688} & \textbf{8}
                & \textbf{8} & \textbf{2.61} & \textbf{0.792}
                & \textbf{51.6} \\
 \addlinespace
 tauFisher    & V1 & 286 & 17 & 14 & 2.45 & 0.806 & 51.7 \\
-        
-      & V2 & 249 & 17 & 14 & 1.87 & 0.855 & 61.4 \\
+             & V2 & 249 & 17 & 14 & 1.87 & 0.855 & 61.4 \\
              & V3 & 153 & 17 & 14 & 2.22 & 0.825 & 51.6 \\
              & \textbf{Valid.all} & \textbf{688} & \textbf{17}
                & \textbf{14} & \textbf{2.19} & \textbf{0.828}
-               & 
-\textbf{55.2} \\
+               & \textbf{55.2} \\
 \addlinespace
 TScore18     & V1 & 286 & 18 & 18 & 2.27 & 0.822 & 55.2 \\
              & V2 & 249 & 18 & 18 & 1.80 & 0.861 & 65.1 \\
              & V3 & 153 & 18 & 18 & 2.43 & 0.808 & 49.0 \\
              & \textbf{Valid.all} & \textbf{688} & \textbf{18}
-        
                & \textbf{18} & \textbf{2.13} & \textbf{0.833}
                & \textbf{57.4} \\
 \addlinespace
 TimeMachine37 & V1 & 286 & 37 & 31 & 2.41 & 0.810 & 54.9 \\
               & V2 & 249 & 37 & 31 & 1.70 & 0.869 & 69.9 \\
-              & V3 & 153 & 37 & 31 & 1.70 & 0.868 & 66.0 
-\\
+              & V3 & 153 & 37 & 31 & 1.70 & 0.868 & 66.0 \\
               & \textbf{Valid.all} & \textbf{688} & \textbf{37}
                 & \textbf{31} & \textbf{1.99} & \textbf{0.844}
                 & \textbf{62.8} \\
 \addlinespace
 fullPool     & V1 & 286 & 7615 & 172 & 2.07 & 0.838 & 61.2 \\
-             & V2 & 249 & 7615 & 172 & 1.69 
-& 0.869 & 67.9 \\
+             & V2 & 249 & 7615 & 172 & 1.69 & 0.869 & 67.9 \\
              & V3 & 153 & 7615 & 172 & 1.88 & 0.854 & 55.6 \\
              & \textbf{Valid.all} & \textbf{688} & \textbf{7615}
                & \textbf{172} & \textbf{1.89} & \textbf{0.853}
@@ -599,11 +591,11 @@ The red dashed line marks the clinical floor nAUC\,${=}\,0.80$.
 \end{figure}
 
 The combined figure reveals several additional insights.
-TimeMachine-37 (nAUC\,${=}\,0.844$) falls \emph{above} the
-Experiment~1 curve at $K = 37$ (nAUC\,${=}\,0.825$), indicating
-that TimeMachine's gene-selection procedure---core-clock genes
-prioritised, then JTK-ranked additions---outperforms a pure top-37
-JTK ranking by $+0.019$ nAUC.
+The reconstructed TimeMachine-37 panel (nAUC\,${=}\,0.844$) falls
+\emph{above} the Experiment~1 curve at $K = 37$
+(nAUC\,${=}\,0.825$), indicating that TimeMachine's gene-selection
+procedure---core-clock genes prioritized, then JTK-ranked
+additions---outperforms a pure top-37 JTK ranking by $+0.019$ nAUC.
 The 4-gene intersection likewise sits well above the Experiment~1
 curve at its gene count, confirming that these four genes are
 disproportionately informative.
@@ -626,7 +618,7 @@ The 4-gene intersection achieving nAUC\,${=}\,0.834$ with only DDIT4,
 PER1, NR1D1, and NR1D2 is particularly striking.
 Two of these genes---NR1D1 (REV-ERB$\alpha$) and NR1D2
 (REV-ERB$\beta$)---are core-clock transcriptional repressors with
-well-characterised high-amplitude 24-h expression rhythms in
+well-characterized high-amplitude 24-h expression rhythms in
 peripheral blood \citep{Reppert2002}.
 PER1 is a central period gene whose blood-borne transcript level
 peaks in the morning, providing a robust phase marker.
@@ -634,7 +626,7 @@ DDIT4 (DNA-damage-inducible transcript 4), a stress-responsive gene,
 has been independently identified as a reliable circadian marker in
 blood by multiple studies \citep{Braun2018, Huang2024}, suggesting
 that its rhythmicity in PBMCs is physiologically meaningful rather
-than an artefact of the training cohort.
+than an artifact of the training cohort.
 The failure of the clockOnly set (nAUC\,${=}\,0.792$) is equally
 informative.
 The eight canonical clock genes present in the assay---including
@@ -675,17 +667,17 @@ investigation.
 The present work differs from TimeMachine and tauFisher in one key
 respect: it retains the original two-blood-draw TimeSignature
 framework and asks only whether the \emph{candidate gene pool} should
-be pre-filtered, holding the regression architecture, normalisation
+be pre-filtered, holding the regression architecture, normalization
 strategy, and evaluation protocol constant.
 This design isolates the effect of gene pre-filtering from
-confounding changes in normalisation (e.g., TimeMachine's
+confounding changes in normalization (e.g., TimeMachine's
 within-sample ratio features) or model class.
 Our Experiment~2 shows that a panel reconstructed by following
 TimeMachine's gene-selection procedure achieves nAUC\,${=}\,0.844$
 within the two-draw framework, close to the full-pool reference of
 0.853.
 This proximity suggests that the gene-selection strategy---rather
-than the single-sample normalisation---accounts for most of the gain
+than the single-sample normalization---accounts for most of the gain
 over unfiltered TimeSignature.
 
 \subsection{Practical Implications}
@@ -710,7 +702,7 @@ First, the JTK\_Cycle ranking is computed on the same GSE39445
 training data used to fit the elastic net, introducing a modest
 double-dipping risk;
 a nested cross-validation design would provide a
-more conservative estimate of generalisation accuracy.
+more conservative estimate of generalization accuracy.
 Second, the training set derives from a controlled sleep-restriction
 protocol (${\sim}$213 samples), which makes JTK p-values liberal and
 the gene ranking potentially over-fitted to that study population;
@@ -723,7 +715,7 @@ the exact symbol lists (e.g., Huang \& Braun 2024 SI Table S2) are
 not publicly bundled with the TimeMachine repository.
 Fourth, V1 consistently shows lower nAUC than V2 and V3 across all
 conditions (Tables~\ref{tab:exp1}--\ref{tab:exp2}), suggesting that
-the Archer dataset presents a harder generalisation challenge whose
+the Archer dataset presents a harder generalization challenge whose
 origin (e.g., platform differences, cohort composition) warrants
 further investigation.
 
@@ -731,7 +723,7 @@ further investigation.
 
 Two extensions are most promising.
 First, applying the same JTK-then-elastic-net pipeline to
-single-draw normalisation strategies---such as TimeMachine's
+single-draw normalization strategies---such as TimeMachine's
 within-sample log-ratio features---would test whether pre-filtering
 also provides efficiency gains in the more challenging single-sample
 setting.
