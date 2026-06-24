@@ -26,7 +26,6 @@
   Jaehyeon Lee\textsuperscript{2}\\
   {\small \textsuperscript{1}Electrical Engineering, KAIST \quad
    \textsuperscript{2}School of Computing, KAIST}\\[8pt]
-  {\small BCS40010 Project --- First Draft}
 }
 
 \date{}
@@ -51,19 +50,23 @@
 %=====================================================================
 Circadian-time prediction from blood transcriptomes has direct
 clinical applications in chronotherapy and circadian phenotyping.
-\emph{TimeSignature} (Braun et al., 2018) trains an elastic-net
-regression over all ${\sim}$7,600 genes in a microarray panel and
-recovers ${\sim}$40 predictors without any prior periodicity screen.
-Subsequent methods---\emph{TimeMachine} (Huang \& Braun, 2024) and
-\emph{tauFisher} (Duan \& Ngo, 2024)---insert a JTK\_Cycle
-rhythmicity pre-filter before regression, reducing the candidate pool
-to 20--37 genes.
-We ask whether the same pre-filtering strategy can improve
-TimeSignature's gene-selection efficiency, yielding a smaller
-predictor set that still meets clinically acceptable accuracy
-(nAUC $\geq 0.80$, MAE $< 2.5$\,h) under the original two-blood-draw
-protocol.
-Two experiments are conducted on four public datasets
+\emph{TimeSignature} addresses this prediction task by training an
+elastic-net regression over all ${\sim}$7,600 genes in a microarray
+panel and recovering ${\sim}$40 predictors without any prior
+periodicity screen.
+This unfiltered training scheme leaves most of the candidate pool
+non-rhythmic, raising the question of whether a periodicity screen
+could yield an equally accurate but far smaller predictor set.
+Such a screen is exactly what subsequent methods---\emph{TimeMachine}
+and \emph{tauFisher}---introduce, inserting a JTK\_Cycle rhythmicity
+pre-filter before regression to reduce the candidate pool to
+20--37 genes.
+Whether this same pre-filtering strategy can improve TimeSignature's
+gene-selection efficiency, yielding a smaller predictor set that still
+meets clinically acceptable accuracy (nAUC $\geq 0.80$,
+MAE $< 2.5$\,h) under the original two-blood-draw protocol, is the
+question we address here.
+To answer this question, two experiments are conducted on four public datasets
 (GSE39445, GSE48113, GSE56931, GSE113883).
 Experiment~1 sweeps the elastic-net candidate pool from 10 to
 7,615 genes ordered by JTK\_Cycle rhythmicity rank, producing a
@@ -72,7 +75,7 @@ Experiment~2 substitutes five published or derived gene
 sets---including the TimeSignature core-18, TimeMachine-37,
 tauFisher, canonical core-clock genes, and their
 intersection---directly into the TimeSignature framework.
-A JTK-filtered pool of only 30 genes achieves
+Across these experiments, a JTK-filtered pool of only 30 genes achieves
 nAUC\,${=}\,0.833$ and MAE\,${=}\,2.13$\,h, within 0.020 nAUC of
 the full-panel model while screening fewer than 0.4\% of the
 transcriptome.
@@ -91,7 +94,10 @@ rather than the textbook feedback loop.
 The circadian clock governs nearly every aspect of human physiology,
 from hormone secretion and immune function to drug metabolism and cell
 division \citep{Reppert2002}.
-This pervasive regulation makes the precise estimation of an
+This pervasive regulation is reflected at the molecular level by
+widespread 24-hour rhythms in gene expression across human tissues
+\citep{Talamanca2023}.
+Such rhythms make the precise estimation of an
 individual's internal circadian phase---often termed the
 \emph{circadian time}---a prerequisite for personalized chronotherapy,
 shift-work assessment, and circadian disorder diagnosis
@@ -100,10 +106,14 @@ The gold-standard measure of circadian phase is the dim-light
 melatonin onset (DLMO), which requires controlled light conditions
 and repeated nocturnal sampling.
 These stringent requirements make DLMO impractical in routine clinical
-settings, motivating the search for biomarker-based alternatives.
+settings, motivating the search for biomarker-based alternatives
+\citep{Ueda2004}.
 Blood transcriptomics offers one such alternative: circadian gene
 expression in peripheral blood tracks internal time with sufficient
-precision for clinical use \citep{Moller2013}.
+precision for clinical use \citep{Moller2013}, and single-sample
+assays such as BodyTime have shown that a compact panel of blood
+transcripts can estimate internal circadian time with accuracy
+comparable to DLMO \citep{Wittenbrink2018}.
 
 Building on this observation, Braun et al.\ (2018) introduced
 \emph{TimeSignature}, an elastic-net model that predicts local
@@ -122,7 +132,9 @@ to the covariate matrix.
 
 Later methods addressed this inefficiency by pre-filtering genes with
 JTK\_Cycle \citep{Hughes2010}, a non-parametric rank-correlation test
-that identifies 24-hour rhythms in time-series expression data.
+that identifies 24-hour rhythms in time-series expression data;
+related algorithms have since been developed to disclose oscillations
+in transcription with improved sensitivity \citep{Antoulas2018}.
 TimeMachine (Huang \& Braun, 2024) applies JTK\_Cycle to reduce
 the candidate pool to 37 rhythmic genes before fitting a penalized
 regression for single-sample circadian-time estimation
@@ -375,12 +387,45 @@ matrix are passed to the elastic net.
 
 \subsection{Reproduction of TimeSignature (Figure 1)}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
-    \includegraphics[width=\linewidth]{figure/comparison.png}
+  \begin{subfigure}{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/fig1_original.pdf}
+    \caption{Original results reported by Braun et al.\ (2018).}
+    \label{fig:fig1_orig}
+  \end{subfigure}
+
+  \vspace{6pt}
+  \begin{subfigure}{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figure/fig1_reproduced.pdf}
+    \caption{Our re-implementation using the full 7,615-gene pool.}
+    \label{fig:fig1_repro}
+  \end{subfigure}
   \caption{
-    \textbf{Cross-study prediction accuracy for four independent datasets.}
-    Original results from Braun et al. (Left) and our reproduced simulation (Right). Both show consistent and high accuracy (nAUC $\geq 0.80$, median error $< 2$\,h), successfully confirming the robustness of the within-subject normalization.
+    \textbf{Reproduction of the TimeSignature cross-study benchmark.}
+    Each column corresponds to one of the four datasets of
+    Table~\ref{tab:datasets} (test set and validation sets V1--V3),
+    and each panel block is arranged in two rows.
+    \emph{Top row:} predicted time of day versus true time of day for
+    each sample, where the dark and light gray bands indicate error
+    ranges of $\pm$2\,h and $\pm$4\,h about the true time;
+    point colour denotes experimental condition (in panel (a):
+    black, control; orange, sleep restriction or forced desynchrony;
+    blue, V2 recovery day), with panel (b) using a distinct colour
+    palette to visually separate the two reproductions.
+    \emph{Bottom row:} the fraction of correctly predicted samples
+    versus the size of the error, shown for three predictors---the
+    TimeSignature model (TS, solid black), a PLSR-based model
+    (PL, dashed purple), and ZeitZeiger (ZZ, dotted cyan)---with the
+    legend listing each method's nAUC and median absolute error.
+    \textbf{(a)} The original results reported by Braun et al.\ (2018).
+    \textbf{(b)} The same evaluation produced by our re-implementation
+    using the full 7,615-gene pool.
+    Both reproduce comparable accuracy (nAUC $\geq 0.80$, median
+    error $< 2$\,h), confirming that our pipeline reproduces the
+    original within-subject-normalization benchmark.
   }
   \label{fig:reproduced_fig1}
 \end{figure}
@@ -406,7 +451,7 @@ trade-off curve, and Table~\ref{tab:exp1} lists the full sweep of 16
 pool sizes.
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.72\textwidth]{figure/Exp1_tradeoff.pdf}
+  \includegraphics[width=0.8\textwidth]{figure/Exp1_tradeoff.pdf}
   \caption{
     \textbf{Experiment 1: JTK-filtered pool size versus accuracy.}
     The x-axis (log scale) is the number of top-$K$
@@ -478,7 +523,7 @@ Figure~\ref{fig:exp2} presents the pooled validation nAUC for each
 set, and Table~\ref{tab:exp2} provides the full performance breakdown.
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.72\textwidth]{figure/Exp2_geneset_nAUC.pdf}
+  \includegraphics[width=0.8\textwidth]{figure/Exp2_geneset_nAUC.pdf}
   \caption{
     \textbf{Experiment 2: nAUC of published gene sets in the
     TimeSignature framework.}
@@ -738,13 +783,21 @@ cohorts.
 \begin{thebibliography}{99}
 \small
 \setlength{\itemsep}{0pt}
-\setlength{\parskip}{4pt}
+\setlength{\parskip}{3pt}
 
 \bibitem[Archer et al.(2014)]{Archer2014}
 Archer, S.N., Laing, E.E., Möller-Levet, C.S., et al.\ (2014).
 Mistimed sleep disrupts circadian regulation of the human
 transcriptome.
 \emph{PNAS}, \textbf{111}(6), E682--E691.
+
+\bibitem[Antoulas et al.(2018)]{Antoulas2018}
+Antoulas, A.C., Zhu, B., Zhang, Q., York, B., O'Malley, B.W.,
+\& Dacso, C.C.\ (2018).
+A novel mathematical method for disclosing oscillations in gene
+transcription: A comparative study.
+\emph{PLOS ONE}, \textbf{13}(9), e0198503.
+
 \bibitem[Braun et al.(2018)]{Braun2018}
 Braun, R., Kath, W.L., Iwanaszko, M., et al.\ (2018).
 Universal method for robust detection of circadian state from gene
@@ -781,6 +834,26 @@ expression amplitude of the human blood transcriptome.
 Reppert, S.M.\ \& Weaver, D.R.\ (2002).
 Coordination of circadian timing in mammals.
 \emph{Nature}, \textbf{418}, 935--941.
+
+\bibitem[Talamanca et al.(2023)]{Talamanca2023}
+Talamanca, L., Gobet, C., \& Naef, F.\ (2023).
+Sex-dimorphic and age-dependent organization of 24-hour gene
+expression rhythms in humans.
+\emph{Science}, \textbf{379}(6631), 478--483.
+
+\bibitem[Ueda et al.(2004)]{Ueda2004}
+Ueda, H.R., Chen, W., Minami, Y., et al.\ (2004).
+Molecular-timetable methods for detection of body time and rhythm
+disorders from single-time-point genome-wide expression profiles.
+\emph{PNAS}, \textbf{101}(31), 11227--11232.
+
+\bibitem[Wittenbrink et al.(2018)]{Wittenbrink2018}
+Wittenbrink, N., Ananthasubramaniam, B., Münch, M., et al.\ (2018).
+High-accuracy determination of internal circadian time from a single
+blood sample.
+\emph{Journal of Clinical Investigation}, \textbf{128}(9),
+3826--3839.
+
 
 \end{thebibliography}
 
